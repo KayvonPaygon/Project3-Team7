@@ -10,15 +10,16 @@ api_key = 'M5U4GAA5AW5TD1I1'
 
 def retrieve_data(function: str, symbol: str, api_key: str) -> dict:
   # query from API
-  url = f'https://www.alphavantage.co/query?function=(function)&symbol=(symbol)&apikey=(api_key)'
+  url = f'https://www.alphavantage.co/query?function={function}&symbol={symbol}&apikey={api_key}'
   response = requests.get(url)
   # read output
   data = response.text
   # parse output
   parsed = json.loads(data)
+  
+  return parsed
 
-return parsed
-# print_pretty(retrieve_data('INCOME_STATEMENT', 'AAPL', api_key))
+print_pretty(retrieve_data('INCOME_STATEMENT', 'AAPL', api_key))
 
 # graph data
 
