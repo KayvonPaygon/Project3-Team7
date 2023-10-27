@@ -1,16 +1,12 @@
-import requests
-import json
+import os
+import webbrowser
 from data_methods import *
-
-# you will need to download requests and json and whatever charting method is chosen to run this file
-
-# Main Page
-import pygal
 import datetime
-from pygal.style import LightStyle
 
 # Alpha Vantage API key
-api_key = 'M5U4GAA5AW5TD1I1'
+api_key = '8FCYBQQE0XDXJWDC'
+
+# 2023-06-06 to 2023-10-26?
 
 # Main Loop
 while True:
@@ -44,15 +40,15 @@ while True:
         else:
             print("\nInvalid choice entered. Please enter 1 to 4.\n")
 
-    begin_date = input("Enter begin date (YYYY-MM-DD): ")
+    start_date = input("Enter begin date (YYYY-MM-DD): ")
     end_date = input("Enter end date (YYYY-MM-DD): ")
 
     # Validate the date range
     try:
-        begin_date = datetime.datetime.strptime(begin_date, "%Y-%m-%d")
-        end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+        check_start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+        check_end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
 
-        if end_date < begin_date:
+        if check_end_date < check_start_date:
             print("\nEnd date cannot be before the begin date.\n")
             continue
         else:
@@ -67,28 +63,17 @@ while True:
         # Default to daily
         time_series_function = time_series_functions.get(time_series_choice, 'TIME_SERIES_DAILY')
         
-        # Make the API request
-        url = f'https://www.alphavantage.co/query?function={time_series_function}&symbol={stock_symbol}&apikey={api_key}'
-        response = requests.get(url)
+        # Make the API request and create web browser with graph
+        data = retrieve_data(time_series_function, stock_symbol, api_key, start_date, end_date)
+        chart = generate_chart(data, chart_choice, time_series_function)
 
-        if response.status_code == 200:
-            data = response.json()
-            
-            # Process the data and create a chart based on user choice
-            dates = list(data[f'Time Series ({time_series_function})'].keys())
-            closing_prices = [float(data[f'Time Series ({time_series_function})'][date]['4. close']) for date in dates]
-            
-            # Create a chart !!(Note: Probably don't need this on main, if so, please delete)!!
-            if chart_choice == '1':
-                chart = pygal.Bar(style=LightStyle, x_label_rotation=45, show_legend=False, title=f'{stock_symbol} Stock Data (Bar Chart)')
-            elif chart_choice == '2':
-                chart = pygal.Line(style=LightStyle, x_label_rotation=45, show_legend=False, title=f'{stock_symbol} Stock Data (Line Chart)')
-            
-            chart.x_labels = dates
-            chart.add('Closing Price', closing_prices)
-            chart.render_in_browser()
-
-        else:
-            print("Error: Failed to retrieve data from Alpha Vantage.")
+        chart.render_to_file('chart.svg')
+        chart_path = os.path.abspath('chart.svg')
+        webbrowser.open('file://' + chart_path)
+        
     except ValueError:
         print("\nInvalid date format. Please use YYYY-MM-DD format for the dates.\n")
+    
+    another = input("Would you like to view more stock data? Enter [y] if yes: ")
+    if another.lower() != 'y':
+        break
